@@ -1,11 +1,13 @@
 from celery import shared_task
 from django.db.models import Avg
-from accounts.models import User
+from accounts.models import User, Role
 from subjects.models import Subject, Enrollment
 from notifications.models import Notification
+
 @shared_task
 def weekly_instructor_summary():
-    instructors = User.objects.filter(role="instructor")
+    instructor_role = Role.objects.get(name="instructor")
+    instructors = User.objects.filter(role=instructor_role)
     for i in instructors:
         subjects = Subject.objects.filter(assigned_instructor=i)
         parts = []

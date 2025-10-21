@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.db.models import Avg
 from .models import Subject, Enrollment
 def can_enroll(user, subject_id):
-    if user.role != "student":
+    if not user.role or user.role.name != "student":
         return False, "not authorized"
     s = Subject.objects.get(id=subject_id)
     if Enrollment.objects.filter(student=user, subject=s, state__in=["approved","enrolled","closed"]).exists():
@@ -56,9 +56,10 @@ def close_subject(instructor, subject_id):
     qs.update(state="closed")
     return True
 def assign_instructor(subject_id, instructor_user_id):
-    from accounts.models import User
+    from accounts.models import User, Role
     s = Subject.objects.get(id=subject_id)
-    p = User.objects.get(id=instructor_user_id, role="instructor")
+    instructor_role = Role.objects.get(name="instructor")
+    p = User.objects.get(id=instructor_user_id, role=instructor_role)
     s.assigned_instructor = p
     s.save()
     return s

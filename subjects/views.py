@@ -20,6 +20,8 @@ class SubjectViewSet(viewsets.ModelViewSet):
         s = services.assign_instructor(pk, request.data.get("instructor_user_id"))
         return Response(SubjectSerializer(s).data)
 class StudentViewSet(viewsets.GenericViewSet):
+    serializer_class = EnrollmentSerializer
+    queryset = Enrollment.objects.all()
     permission_classes = [IsAuthenticated, IsStudent]
     @action(detail=False, methods=["post"])
     @validate_prerequisites
@@ -47,6 +49,8 @@ class StudentViewSet(viewsets.GenericViewSet):
         qs = services.history(request.user)
         return Response(EnrollmentSerializer(qs, many=True).data)
 class InstructorViewSet(viewsets.GenericViewSet):
+    serializer_class = EnrollmentSerializer
+    queryset = Enrollment.objects.all()
     permission_classes = [IsAuthenticated, IsInstructor]
     @action(detail=False, methods=["get"])
     def assigned_subjects(self, request):

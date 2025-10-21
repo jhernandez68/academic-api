@@ -2,12 +2,14 @@ import csv
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from accounts.models import User
+from accounts.models import User, Role
 from subjects.models import Enrollment
+
 class StudentReportCSV(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, id):
-        u = User.objects.get(id=id, role="student")
+        student_role = Role.objects.get(name="student")
+        u = User.objects.get(id=id, role=student_role)
         resp = HttpResponse(content_type="text/csv")
         resp["Content-Disposition"] = f'attachment; filename="student_report_{u.id}.csv"'
         w = csv.writer(resp)
@@ -19,7 +21,8 @@ class StudentReportCSV(APIView):
 class InstructorReportCSV(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, id):
-        u = User.objects.get(id=id, role="instructor")
+        instructor_role = Role.objects.get(name="instructor")
+        u = User.objects.get(id=id, role=instructor_role)
         resp = HttpResponse(content_type="text/csv")
         resp["Content-Disposition"] = f'attachment; filename="instructor_report_{u.id}.csv"'
         w = csv.writer(resp)
