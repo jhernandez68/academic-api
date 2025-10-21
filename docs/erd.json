@@ -1,403 +1,193 @@
 {
-  "entities": [
+  "System": "Academic API - Database Schema",
+  "Roles": [
     {
-      "name": "Role",
-      "attributes": [
-        {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "name",
-          "type": "VARCHAR(20)",
-          "nullable": false,
-          "unique": true,
-          "values": ["admin", "instructor", "student"]
-        },
-        {
-          "name": "display_name",
-          "type": "VARCHAR(100)",
-          "nullable": false
-        },
-        {
-          "name": "description",
-          "type": "TEXT",
-          "nullable": true
-        },
-        {
-          "name": "created_at",
-          "type": "TIMESTAMP",
-          "nullable": false
-        },
-        {
-          "name": "updated_at",
-          "type": "TIMESTAMP",
-          "nullable": false
-        }
-      ]
+      "id": "1",
+      "name": "admin",
+      "displayName": "Administrador",
+      "description": "Administrador del sistema con acceso total",
+      "createdAt": "2025-01-01",
+      "updatedAt": "2025-01-01"
     },
     {
-      "name": "User",
-      "attributes": [
-        {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "username",
-          "type": "VARCHAR(150)",
-          "nullable": false,
-          "unique": true
-        },
-        {
-          "name": "email",
-          "type": "VARCHAR(254)",
-          "nullable": false
-        },
-        {
-          "name": "password",
-          "type": "VARCHAR(128)",
-          "nullable": false
-        },
-        {
-          "name": "first_name",
-          "type": "VARCHAR(150)",
-          "nullable": false
-        },
-        {
-          "name": "last_name",
-          "type": "VARCHAR(150)",
-          "nullable": false
-        },
-        {
-          "name": "is_staff",
-          "type": "BOOLEAN",
-          "nullable": false,
-          "default": false
-        },
-        {
-          "name": "is_active",
-          "type": "BOOLEAN",
-          "nullable": false,
-          "default": true
-        },
-        {
-          "name": "is_superuser",
-          "type": "BOOLEAN",
-          "nullable": false,
-          "default": false
-        },
-        {
-          "name": "date_joined",
-          "type": "TIMESTAMP",
-          "nullable": false
-        },
-        {
-          "name": "last_login",
-          "type": "TIMESTAMP",
-          "nullable": true
-        },
-        {
-          "name": "role_id",
-          "type": "BigAutoField",
-          "nullable": true,
-          "foreignKey": {
-            "references": "Role",
-            "field": "id"
-          }
-        }
-      ]
+      "id": "2",
+      "name": "instructor",
+      "displayName": "Instructor",
+      "description": "Profesor que califica a estudiantes",
+      "createdAt": "2025-01-01",
+      "updatedAt": "2025-01-01"
     },
     {
-      "name": "Student",
-      "attributes": [
-        {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "user_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "unique": true,
-          "foreignKey": {
-            "references": "User",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        },
-        {
-          "name": "max_credits_per_term",
-          "type": "INT",
-          "nullable": false,
-          "default": 16
-        }
-      ]
+      "id": "3",
+      "name": "student",
+      "displayName": "Estudiante",
+      "description": "Estudiante que se inscribe en materias",
+      "createdAt": "2025-01-01",
+      "updatedAt": "2025-01-01"
+    }
+  ],
+  "Users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "email": "admin@academic.com",
+      "password": "hashed_password",
+      "firstName": "Admin",
+      "lastName": "User",
+      "isStaff": true,
+      "isActive": true,
+      "isSuperuser": true,
+      "dateJoined": "2025-01-01",
+      "role": {
+        "id": "1",
+        "name": "admin"
+      },
+      "Students": [],
+      "Instructors": [],
+      "SubjectsAssigned": [],
+      "Enrollments": [],
+      "Notifications": []
     },
     {
-      "name": "Instructor",
-      "attributes": [
+      "id": "2",
+      "username": "instructor1",
+      "email": "instructor@academic.com",
+      "password": "hashed_password",
+      "firstName": "Juan",
+      "lastName": "Profesor",
+      "isStaff": false,
+      "isActive": true,
+      "isSuperuser": false,
+      "dateJoined": "2025-01-05",
+      "role": {
+        "id": "2",
+        "name": "instructor"
+      },
+      "Students": [],
+      "Instructors": [
         {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "user_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "unique": true,
-          "foreignKey": {
-            "references": "User",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        },
-        {
-          "name": "max_credits_per_term",
-          "type": "INT",
-          "nullable": false,
-          "default": 20
-        }
-      ]
-    },
-    {
-      "name": "Subject",
-      "attributes": [
-        {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "name",
-          "type": "VARCHAR(255)",
-          "nullable": false
-        },
-        {
-          "name": "code",
-          "type": "VARCHAR(50)",
-          "nullable": false,
-          "unique": true
-        },
-        {
-          "name": "credits",
-          "type": "INT",
-          "nullable": false
-        },
-        {
-          "name": "assigned_instructor_id",
-          "type": "BigAutoField",
-          "nullable": true,
-          "foreignKey": {
-            "references": "User",
-            "field": "id",
-            "onDelete": "SET NULL"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Subject_Prerequisites",
-      "description": "Many-to-Many relationship: Subject prerequisites",
-      "attributes": [
-        {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "from_subject_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "foreignKey": {
-            "references": "Subject",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        },
-        {
-          "name": "to_subject_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "foreignKey": {
-            "references": "Subject",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Enrollment",
-      "attributes": [
-        {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
-        {
-          "name": "student_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "foreignKey": {
-            "references": "User",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        },
-        {
-          "name": "subject_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "foreignKey": {
-            "references": "Subject",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        },
-        {
-          "name": "state",
-          "type": "VARCHAR(20)",
-          "nullable": false,
-          "values": ["enrolled", "approved", "failed", "closed"],
-          "default": "enrolled"
-        },
-        {
-          "name": "grade",
-          "type": "DECIMAL(3,1)",
-          "nullable": true
-        },
-        {
-          "name": "created_at",
-          "type": "TIMESTAMP",
-          "nullable": false
+          "id": "1",
+          "maxCreditsPerTerm": 20
         }
       ],
-      "constraints": [
+      "SubjectsAssigned": [
         {
-          "type": "UNIQUE",
-          "fields": ["student_id", "subject_id"]
+          "subjectId": "1",
+          "subjectName": "PRO101",
+          "credits": 3
         }
-      ]
+      ],
+      "Enrollments": [],
+      "Notifications": []
     },
     {
-      "name": "Notification",
-      "attributes": [
+      "id": "3",
+      "username": "student1",
+      "email": "student@academic.com",
+      "password": "hashed_password",
+      "firstName": "Carlos",
+      "lastName": "Estudiante",
+      "isStaff": false,
+      "isActive": true,
+      "isSuperuser": false,
+      "dateJoined": "2025-01-10",
+      "role": {
+        "id": "3",
+        "name": "student"
+      },
+      "Students": [
         {
-          "name": "id",
-          "type": "BigAutoField",
-          "primaryKey": true,
-          "nullable": false
-        },
+          "id": "1",
+          "maxCreditsPerTerm": 16
+        }
+      ],
+      "Instructors": [],
+      "SubjectsAssigned": [],
+      "Enrollments": [
         {
-          "name": "user_id",
-          "type": "BigAutoField",
-          "nullable": false,
-          "foreignKey": {
-            "references": "User",
-            "field": "id",
-            "onDelete": "CASCADE"
-          }
-        },
+          "id": "1",
+          "subjectId": "1",
+          "subjectName": "PRO101",
+          "state": "enrolled",
+          "grade": null,
+          "createdAt": "2025-01-15"
+        }
+      ],
+      "Notifications": [
         {
-          "name": "type",
-          "type": "VARCHAR(50)",
-          "nullable": false
-        },
-        {
-          "name": "message",
-          "type": "TEXT",
-          "nullable": false
-        },
-        {
-          "name": "created",
-          "type": "TIMESTAMP",
-          "nullable": false
-        },
-        {
-          "name": "read",
-          "type": "BOOLEAN",
-          "nullable": false,
-          "default": false
+          "id": "1",
+          "type": "grade_assigned",
+          "message": "Tu calificación para PRO101 ha sido registrada",
+          "created": "2025-01-20",
+          "read": false
         }
       ]
     }
   ],
-  "relationships": [
+  "Subjects": [
     {
-      "from": "Role",
-      "to": "User",
-      "type": "one-to-many",
-      "label": "has users",
-      "fromField": "id",
-      "toField": "role_id"
+      "id": "1",
+      "name": "Programacion I",
+      "code": "PRO101",
+      "credits": 3,
+      "assignedInstructorId": "2",
+      "assignedInstructorName": "Juan Profesor",
+      "prerequisites": [
+        {
+          "id": "99",
+          "code": "MAT101",
+          "name": "Matematica Basica"
+        }
+      ],
+      "enrollments": [
+        {
+          "enrollmentId": "1",
+          "studentId": "3",
+          "studentName": "Carlos Estudiante",
+          "state": "enrolled",
+          "grade": null
+        }
+      ]
     },
     {
-      "from": "User",
-      "to": "Student",
-      "type": "one-to-one",
-      "label": "has student profile",
-      "fromField": "id",
-      "toField": "user_id"
-    },
+      "id": "2",
+      "name": "Base de Datos",
+      "code": "BDD101",
+      "credits": 3,
+      "assignedInstructorId": "2",
+      "assignedInstructorName": "Juan Profesor",
+      "prerequisites": [
+        {
+          "id": "1",
+          "code": "PRO101",
+          "name": "Programacion I"
+        }
+      ],
+      "enrollments": []
+    }
+  ],
+  "Enrollments": [
     {
-      "from": "User",
-      "to": "Instructor",
-      "type": "one-to-one",
-      "label": "has instructor profile",
-      "fromField": "id",
-      "toField": "user_id"
-    },
+      "id": "1",
+      "studentId": "3",
+      "studentName": "Carlos Estudiante",
+      "subjectId": "1",
+      "subjectCode": "PRO101",
+      "subjectName": "Programacion I",
+      "state": "enrolled",
+      "grade": null,
+      "createdAt": "2025-01-15"
+    }
+  ],
+  "Notifications": [
     {
-      "from": "User",
-      "to": "Subject",
-      "type": "one-to-many",
-      "label": "assigns subjects",
-      "fromField": "id",
-      "toField": "assigned_instructor_id"
-    },
-    {
-      "from": "Subject",
-      "to": "Subject_Prerequisites",
-      "type": "one-to-many",
-      "label": "has prerequisites",
-      "fromField": "id",
-      "toField": "from_subject_id"
-    },
-    {
-      "from": "User",
-      "to": "Enrollment",
-      "type": "one-to-many",
-      "label": "has enrollments",
-      "fromField": "id",
-      "toField": "student_id"
-    },
-    {
-      "from": "Subject",
-      "to": "Enrollment",
-      "type": "one-to-many",
-      "label": "has students",
-      "fromField": "id",
-      "toField": "subject_id"
-    },
-    {
-      "from": "User",
-      "to": "Notification",
-      "type": "one-to-many",
-      "label": "receives notifications",
-      "fromField": "id",
-      "toField": "user_id"
+      "id": "1",
+      "userId": "3",
+      "userName": "Carlos Estudiante",
+      "type": "grade_assigned",
+      "message": "Tu calificación para PRO101 ha sido registrada",
+      "created": "2025-01-20",
+      "read": false
     }
   ]
 }
