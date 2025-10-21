@@ -1,0 +1,403 @@
+{
+  "entities": [
+    {
+      "name": "Role",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "unique": true,
+          "values": ["admin", "instructor", "student"]
+        },
+        {
+          "name": "display_name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "username",
+          "type": "VARCHAR(150)",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR(254)",
+          "nullable": false
+        },
+        {
+          "name": "password",
+          "type": "VARCHAR(128)",
+          "nullable": false
+        },
+        {
+          "name": "first_name",
+          "type": "VARCHAR(150)",
+          "nullable": false
+        },
+        {
+          "name": "last_name",
+          "type": "VARCHAR(150)",
+          "nullable": false
+        },
+        {
+          "name": "is_staff",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": true
+        },
+        {
+          "name": "is_superuser",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "date_joined",
+          "type": "TIMESTAMP",
+          "nullable": false
+        },
+        {
+          "name": "last_login",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "role_id",
+          "type": "BigAutoField",
+          "nullable": true,
+          "foreignKey": {
+            "references": "Role",
+            "field": "id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "unique": true,
+          "foreignKey": {
+            "references": "User",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "max_credits_per_term",
+          "type": "INT",
+          "nullable": false,
+          "default": 16
+        }
+      ]
+    },
+    {
+      "name": "Instructor",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "unique": true,
+          "foreignKey": {
+            "references": "User",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "max_credits_per_term",
+          "type": "INT",
+          "nullable": false,
+          "default": 20
+        }
+      ]
+    },
+    {
+      "name": "Subject",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(255)",
+          "nullable": false
+        },
+        {
+          "name": "code",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "credits",
+          "type": "INT",
+          "nullable": false
+        },
+        {
+          "name": "assigned_instructor_id",
+          "type": "BigAutoField",
+          "nullable": true,
+          "foreignKey": {
+            "references": "User",
+            "field": "id",
+            "onDelete": "SET NULL"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subject_Prerequisites",
+      "description": "Many-to-Many relationship: Subject prerequisites",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "from_subject_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "foreignKey": {
+            "references": "Subject",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "to_subject_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "foreignKey": {
+            "references": "Subject",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enrollment",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "student_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "foreignKey": {
+            "references": "User",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "subject_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "foreignKey": {
+            "references": "Subject",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "state",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "values": ["enrolled", "approved", "failed", "closed"],
+          "default": "enrolled"
+        },
+        {
+          "name": "grade",
+          "type": "DECIMAL(3,1)",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": false
+        }
+      ],
+      "constraints": [
+        {
+          "type": "UNIQUE",
+          "fields": ["student_id", "subject_id"]
+        }
+      ]
+    },
+    {
+      "name": "Notification",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "primaryKey": true,
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "BigAutoField",
+          "nullable": false,
+          "foreignKey": {
+            "references": "User",
+            "field": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        {
+          "name": "message",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created",
+          "type": "TIMESTAMP",
+          "nullable": false
+        },
+        {
+          "name": "read",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Role",
+      "to": "User",
+      "type": "one-to-many",
+      "label": "has users",
+      "fromField": "id",
+      "toField": "role_id"
+    },
+    {
+      "from": "User",
+      "to": "Student",
+      "type": "one-to-one",
+      "label": "has student profile",
+      "fromField": "id",
+      "toField": "user_id"
+    },
+    {
+      "from": "User",
+      "to": "Instructor",
+      "type": "one-to-one",
+      "label": "has instructor profile",
+      "fromField": "id",
+      "toField": "user_id"
+    },
+    {
+      "from": "User",
+      "to": "Subject",
+      "type": "one-to-many",
+      "label": "assigns subjects",
+      "fromField": "id",
+      "toField": "assigned_instructor_id"
+    },
+    {
+      "from": "Subject",
+      "to": "Subject_Prerequisites",
+      "type": "one-to-many",
+      "label": "has prerequisites",
+      "fromField": "id",
+      "toField": "from_subject_id"
+    },
+    {
+      "from": "User",
+      "to": "Enrollment",
+      "type": "one-to-many",
+      "label": "has enrollments",
+      "fromField": "id",
+      "toField": "student_id"
+    },
+    {
+      "from": "Subject",
+      "to": "Enrollment",
+      "type": "one-to-many",
+      "label": "has students",
+      "fromField": "id",
+      "toField": "subject_id"
+    },
+    {
+      "from": "User",
+      "to": "Notification",
+      "type": "one-to-many",
+      "label": "receives notifications",
+      "fromField": "id",
+      "toField": "user_id"
+    }
+  ]
+}

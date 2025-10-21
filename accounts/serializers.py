@@ -36,3 +36,26 @@ class CreateUserSerializer(serializers.ModelSerializer):
         if u.role and u.role.name == "instructor":
             Instructor.objects.create(user=u)
         return u
+
+
+class AdminStatisticsSerializer(serializers.Serializer):
+    """Serializer para las estadísticas generales del sistema"""
+
+    users = serializers.DictField(
+        help_text="Información sobre usuarios (total de estudiantes, profesores, admins, activos e inactivos)"
+    )
+    subjects = serializers.DictField(
+        help_text="Información sobre materias (total, con profesor, sin profesor, promedio por profesor)"
+    )
+    enrollments = serializers.DictField(
+        help_text="Información sobre inscripciones (total, por estado)"
+    )
+    academic_performance = serializers.DictField(
+        help_text="Desempeño académico (tasa de aprobación, promedio del sistema, GPA promedio)"
+    )
+    grade_distribution = serializers.DictField(
+        help_text="Distribución de calificaciones por rango"
+    )
+    professors_with_assignments = serializers.IntegerField(
+        help_text="Total de profesores con materias asignadas"
+    )
