@@ -8,7 +8,6 @@ schema_view = get_schema_view(
     openapi.Info(title="API", default_version="v1"),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    patterns=[path("api/", include("accounts.urls")), path("api/", include("subjects.urls"))],
 )
 urlpatterns = [
     path("admin/", admin.site.urls),
