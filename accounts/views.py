@@ -86,6 +86,34 @@ class UserViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retriev
         u = assign_role(pk, role)
         return Response(UserSerializer(u).data)
 
+    @swagger_auto_schema(request_body=AssignRoleSerializer, responses={200: UserSerializer})
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, IsAdmin])
+    def change_role(self, request, pk=None):
+        """
+        Cambia el rol de un usuario que ya tiene uno asignado.
+
+        Args:
+            request: Solicitud HTTP con datos en el body:
+                - role (str): Nombre del nuevo rol ('admin', 'instructor', o 'student')
+            pk: ID del usuario cuyo rol se cambiará
+
+        Returns:
+            Response: Objeto del usuario actualizado con su nuevo rol
+
+        Comportamiento:
+            - Similar a assign_role pero se utiliza cuando el usuario ya tiene un rol
+            - Si se cambia a rol 'student', crea automáticamente perfil Student si no existe
+            - Si se cambia a rol 'instructor', crea automáticamente perfil Instructor si no existe
+            - Solo administradores pueden cambiar roles
+
+        Raises:
+            Http404: Si el usuario no existe
+            Http400: Si el rol especificado no existe
+        """
+        role = request.data.get("role")
+        u = assign_role(pk, role)
+        return Response(UserSerializer(u).data)
+
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated, IsAdmin])
     def statistics(self, request):
         """

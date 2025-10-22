@@ -1,45 +1,118 @@
+version: '3.9'
+
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: academic_postgres
+    environment:
+      POSTGRES_DB: academic_db
+      POSTGRES_USER: academic_user
+      POSTGRES_PASSWORD: academic_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U academic_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - academic_network
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: academic_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - academic_network
+
+  # Django Application
   web:
     build: .
-    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - .:/app
-    env_file:
-      - .env
+    container_name: academic_web
+    environment:
+      DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,web,0.0.0.0"
+      DATABASE_URL: "postgresql://academic_user:academic_password@postgres:5432/academic_db"
+      REDIS_URL: "redis://redis:6379/0"
+      DJANGO_SUPERUSER_PASSWORD: "admin123"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
-  worker:
-    build: .
-    command: celery -A core worker -l info
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
-  beat:
+    networks:
+      - academic_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/swagger/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Celery Worker
+  celery_worker:
     build: .
-    command: celery -A core beat -l info
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
-  db:
-    image: postgres:16
+    container_name: academic_celery_worker
+    command: celery -A core worker -l info --without-gossip --without-mingle --without-heartbeat
     environment:
-      POSTGRES_DB: app
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-    ports:
-      - "5432:5432"
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
+      DEBUG: "False"
+      DATABASE_URL: "postgresql://academic_user:academic_password@postgres:5432/academic_db"
+      REDIS_URL: "redis://redis:6379/0"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+    networks:
+      - academic_network
+    restart: unless-stopped
+
+  # Celery Beat (Scheduled Tasks)
+  celery_beat:
+    build: .
+    container_name: academic_celery_beat
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      DEBUG: "False"
+      DATABASE_URL: "postgresql://academic_user:academic_password@postgres:5432/academic_db"
+      REDIS_URL: "redis://redis:6379/0"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+    networks:
+      - academic_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  academic_network:
+    driver: bridge

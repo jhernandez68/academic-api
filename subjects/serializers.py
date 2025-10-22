@@ -83,6 +83,14 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         - Las inscripciones no pueden duplicarse (constraint unique_together en model)
         - Solo el profesor asignado puede calificar
     """
+    grade = serializers.SerializerMethodField()
+
+    def get_grade(self, obj):
+        """Convierte Decimal a float para una mejor serialización JSON."""
+        if obj.grade is None:
+            return None
+        return float(obj.grade)
+
     class Meta:
         model = Enrollment
         fields = ["id","student","subject","state","grade","created_at"]
