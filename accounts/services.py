@@ -1,51 +1,88 @@
+"""
+Módulo de servicios para gestión de usuarios y roles.
+
+Este módulo proporciona funciones de negocio para:
+- Asignación de roles a usuarios
+- Cálculo de estadísticas del sistema académico
+"""
+
 from .models import User, Student, Instructor, Role
-from django.db.models import Count, Avg, Q, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models import Avg
+from decimal import Decimal
+
 
 def assign_role(user_id, role_name):
-    """Asigna un rol a un usuario. El parámetro role_name debe ser el nombre del rol (admin, instructor, student)"""
+    """
+    Asigna un rol a un usuario y crea los perfiles asociados si es necesario.
+
+    Args:
+        user_id (int): ID del usuario al que se le asignará el rol
+        role_name (str): Nombre del rol ('admin', 'instructor', 'student')
+
+    Returns:
+        User: El usuario actualizado con el nuevo rol
+
+    Raises:
+        User.DoesNotExist: Si el usuario no existe
+        Role.DoesNotExist: Si el rol especificado no existe
+
+    Comportamiento:
+        - Si el rol es 'student' y no existe perfil Student, lo crea
+        - Si el rol es 'instructor' y no existe perfil Instructor, lo crea
+    """
     from django.shortcuts import get_object_or_404
 
-    u = User.objects.get(id=user_id)
+    user = User.objects.get(id=user_id)
     role_obj = get_object_or_404(Role, name=role_name)
-    u.role = role_obj
-    u.save()
+    user.role = role_obj
+    user.save()
 
-    if role_name == "student" and not hasattr(u, "student"):
-        Student.objects.create(user=u)
-    if role_name == "instructor" and not hasattr(u, "instructor"):
-        Instructor.objects.create(user=u)
+    if role_name == "student" and not hasattr(user, "student"):
+        Student.objects.create(user=user)
+    if role_name == "instructor" and not hasattr(user, "instructor"):
+        Instructor.objects.create(user=user)
 
-    return u
+    return user
 
 
 def get_admin_statistics():
     """
-    Calcula y retorna estadísticas generales del sistema para administradores.
-    Incluye información sobre usuarios, materias, inscripciones y desempeño académico.
+    Calcula estadísticas completas del sistema académico para administradores.
+
+    Returns:
+        dict: Diccionario con las siguientes claves:
+            - users: Conteos por rol y estado de actividad
+            - subjects: Información sobre materias y profesores asignados
+            - enrollments: Inscripciones distribuidas por estado
+            - academic_performance: Tasas de aprobación, promedio general
+            - grade_distribution: Distribución de calificaciones por rangos
+            - professors_with_assignments: Total de profesores con asignaturas
+
+    Cálculos realizados:
+        - Conteo de usuarios por rol (admin, instructor, student)
+        - Estudiantes activos (con al menos una inscripción)
+        - Inscripciones agrupadas por estado (enrolled, approved, failed, closed)
+        - Tasas de aprobación/reprobación (solo de inscritos completados)
+        - Promedio de calificaciones del sistema
+        - Promedio de calificaciones por estudiante
+        - Distribución de notas en rangos: [0-1), [1-2), [2-3), [3-4), [4-5]
     """
     from subjects.models import Subject, Enrollment
 
-    # Contar usuarios por rol
     total_students = User.objects.filter(role__name="student").count()
     total_instructors = User.objects.filter(role__name="instructor").count()
     total_admins = User.objects.filter(role__name="admin").count()
 
-    # Contar materias
     total_subjects = Subject.objects.count()
     subjects_with_instructor = Subject.objects.filter(assigned_instructor__isnull=False).count()
     subjects_without_instructor = total_subjects - subjects_with_instructor
 
-    # Contar inscripciones totales
     total_enrollments = Enrollment.objects.count()
-
-    # Contar inscripciones por estado
     enrollments_enrolled = Enrollment.objects.filter(state="enrolled").count()
     enrollments_approved = Enrollment.objects.filter(state="approved").count()
     enrollments_failed = Enrollment.objects.filter(state="failed").count()
     enrollments_closed = Enrollment.objects.filter(state="closed").count()
 
-    # Calcular tasas de aprobación/reprobación (entre inscripciones cerradas)
     closed_enrollments = Enrollment.objects.filter(state__in=["approved", "failed"])
     total_closed = closed_enrollments.count()
 
@@ -56,16 +93,9 @@ def get_admin_statistics():
         approval_rate = 0
         failure_rate = 0
 
-    # Calcular promedio general del sistema
-    from decimal import Decimal
-    avg_grade_result = Enrollment.objects.filter(
-        grade__isnull=False
-    ).aggregate(
-        avg=Avg("grade")
-    )
+    avg_grade_result = Enrollment.objects.filter(grade__isnull=False).aggregate(avg=Avg("grade"))
     avg_grade = avg_grade_result["avg"] or Decimal("0.0")
 
-    # Distribución de calificaciones (solo las completadas)
     graded_enrollments = Enrollment.objects.filter(grade__isnull=False)
     grade_distribution = {
         "0_1": graded_enrollments.filter(grade__lt=1).count(),
@@ -75,18 +105,12 @@ def get_admin_statistics():
         "4_5": graded_enrollments.filter(grade__gte=4, grade__lte=5).count(),
     }
 
-    # Estadísticas por profesor
     professors_with_assignments = Subject.objects.filter(
         assigned_instructor__isnull=False
     ).values('assigned_instructor').distinct().count()
 
-    # Promedio de materias por profesor
-    if professors_with_assignments > 0:
-        avg_subjects_per_instructor = total_subjects / professors_with_assignments
-    else:
-        avg_subjects_per_instructor = 0
+    avg_subjects_per_instructor = (total_subjects / professors_with_assignments) if professors_with_assignments > 0 else 0
 
-    # Estudiantes activos (con al menos una inscripción)
     active_students = User.objects.filter(
         role__name="student",
         student_enrollments__isnull=False
@@ -94,7 +118,6 @@ def get_admin_statistics():
 
     inactive_students = total_students - active_students
 
-    # Estudiantes por promedio
     student_gpas = []
     students = User.objects.filter(role__name="student")
     for student in students:
@@ -105,7 +128,6 @@ def get_admin_statistics():
 
     avg_student_gpa = sum(student_gpas) / len(student_gpas) if student_gpas else 0
 
-    # Compilar estadísticas
     statistics = {
         "users": {
             "total_students": total_students,
